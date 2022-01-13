@@ -1,0 +1,23 @@
+species,ribosome_abundance,Reference,Reference title,Location in the reference,Comment
+Sphingomonas sp. RB2256,2800,Zhao2017,Three-Dimensional Structure of the Ultraoligotrophic Marine Bacterium “Candidatus Pelagibacter ubique”,p. 7; Table 2,
+Campylobacter jejuni,5000,Zhao2017,Three-Dimensional Structure of the Ultraoligotrophic Marine Bacterium “Candidatus Pelagibacter ubique”,p. 7; Table 2,
+Rickettsia prowazekii,1530,Zhao2017,Three-Dimensional Structure of the Ultraoligotrophic Marine Bacterium “Candidatus Pelagibacter ubique”,p. 7; Table 2,
+Spiroplasma melliferum,900,Zhao2017,Three-Dimensional Structure of the Ultraoligotrophic Marine Bacterium “Candidatus Pelagibacter ubique”,p. 7; Table 2,
+Pelagibacter ubique,401.5,Zhao2017,Three-Dimensional Structure of the Ultraoligotrophic Marine Bacterium “Candidatus Pelagibacter ubique”,p. 7; Table 2,
+Escherichia coli,49170,Zhao2017,Three-Dimensional Structure of the Ultraoligotrophic Marine Bacterium “Candidatus Pelagibacter ubique”,p. 7; Table 2,
+WWE30OP11-OD1,42.3,Zhao2017,Three-Dimensional Structure of the Ultraoligotrophic Marine Bacterium “Candidatus Pelagibacter ubique”,p. 7; Table 2,
+Bacillus subtilis,6000,Lynch2017,"Membranes, energetics, and evolution across the prokaryote-eukaryote divide",Appendix 1; Table 3,Taken directly from the supplementary spreadsheet
+Legionella pneumophila,7400,Lynch2017,"Membranes, energetics, and evolution across the prokaryote-eukaryote divide",Appendix 1; Table 3,Taken directly from the supplementary spreadsheet
+Leptospira interrogans,4122,Lynch2017,"Membranes, energetics, and evolution across the prokaryote-eukaryote divide",Appendix 1; Table 3,Taken directly from the supplementary spreadsheet
+Mycoplasma pneumoniae,209,Lynch2017,"Membranes, energetics, and evolution across the prokaryote-eukaryote divide",Appendix 1; Table 3,Taken directly from the supplementary spreadsheet
+Mycobacterium tuberculosis,1672,Lynch2017,"Membranes, energetics, and evolution across the prokaryote-eukaryote divide",Appendix 1; Table 3,Taken directly from the supplementary spreadsheet
+Rickettsia prowazekii,1500,Lynch2017,"Membranes, energetics, and evolution across the prokaryote-eukaryote divide",Appendix 1; Table 3,Taken directly from the supplementary spreadsheet
+Sphingopyxis alaskensis,1025,Lynch2017,"Membranes, energetics, and evolution across the prokaryote-eukaryote divide",Appendix 1; Table 3,Taken directly from the supplementary spreadsheet
+Spiroplasma melliferum,275,Lynch2017,"Membranes, energetics, and evolution across the prokaryote-eukaryote divide",Appendix 1; Table 3,Taken directly from the supplementary spreadsheet
+Staphylococcus aureus,54400,Lynch2017,"Membranes, energetics, and evolution across the prokaryote-eukaryote divide",Appendix 1; Table 3,Taken directly from the supplementary spreadsheet
+Escherichia coli,27592,Lynch2017,"Membranes, energetics, and evolution across the prokaryote-eukaryote divide",Appendix 1; Table 3,Taken directly from the supplementary spreadsheet
+Vibrio angustum,17166.66667,Lynch2017,"Membranes, energetics, and evolution across the prokaryote-eukaryote divide",Appendix 1; Table 3,Taken directly from the supplementary spreadsheet
+Myojin parakaryote,320,Yamada2018,"Mycolicibacterium smegmatis, Basonym Mycobacterium smegmatis, Expresses Morphological Phenotypes Much More Similar to Escherichia coli Than Mycobacterium tuberculosis in Quantitative Structome Analysis and CryoTEM Examination",p. 8; Table 5,
+Myojin amorphous bacteria,1150,Yamada2018,"Mycolicibacterium smegmatis, Basonym Mycobacterium smegmatis, Expresses Morphological Phenotypes Much More Similar to Escherichia coli Than Mycobacterium tuberculosis in Quantitative Structome Analysis and CryoTEM Examination",p. 8; Table 5,
+Mycobacterium tuberculosis,1670,Yamada2018,"Mycolicibacterium smegmatis, Basonym Mycobacterium smegmatis, Expresses Morphological Phenotypes Much More Similar to Escherichia coli Than Mycobacterium tuberculosis in Quantitative Structome Analysis and CryoTEM Examination",p. 8; Table 5,
+Mycobacterium smegmatis,8670,Yamada2018,"Mycolicibacterium smegmatis, Basonym Mycobacterium smegmatis, Expresses Morphological Phenotypes Much More Similar to Escherichia coli Than Mycobacterium tuberculosis in Quantitative Structome Analysis and CryoTEM Examination",p. 8; Table 5,
