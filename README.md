@@ -26,15 +26,71 @@
 
 
 # ********** Script descriptions **********
-# ./data/main/cellular_traits_processing.R: Integrates different cell traits and proteomic data into a common file used for downstream analysis.
+# ./data/main/quant_proteome_annotation.R
+#         Description: Assigns each gene as a ribosomal protein or an envelope-producer
+#                      for E. coli quantiative proteomics studies across growth conditions. It uses previosuly published studies, and outputs
+#                      a modified spreadsheet for each study with three additional columns, denoting KEGG id, and the assignment to a proteome sector
+#
+#         Input --  Supplementary Table 2 (Erickson et al. 2017)[https://www.nature.com/articles/nature24299],
+                    Table S6 (Schmidt et al. 2016)[https://www.nature.com/articles/nbt.3418],
+                    Supplementary Information (Peebo et al. 2015)[https://pubs.rsc.org/en/content/articlelanding/2015/MB/C4MB00721B],
+                    Table S1 (Li et al. 2014)[https://www.sciencedirect.com/science/article/pii/S0092867414002323?via%3Dihub],
+                    Table S2 (Valgepea et al. 2013)[https://pubs.rsc.org/en/content/articlelanding/2013/MB/c3mb70119k],
+                    Dataset EV2 and Dataset EV9 (Mori et al. 2021)[https://www.embopress.org/doi/full/10.15252/msb.20209536]
+#                    
+#         Output -- ./assigned_function/*_assigned.csv
+#
+#
+# ./data/main/quant_proteome_analysis_pooled.R
+#         Description: Calculates mass fractions for each proteomic class when E. coli is reared in different conditions. It outputs a joint spreadsheet
+#                      with values of \Phi_R and \Phi_L for all studies used to generate Figure 4 in the manuscript.
+#         Input: ./assigned_function/*_assigned.csv
+#         Output: proteomic_fractions_full.csv
+#
+#
+# ./data/main/paxDB_proteomes.R
+#         Description: Assigns proteins into proteome sectors and calculates proteomic mass fractions for all species in PaxDB.
+#                      Note that it requires original mapping tsv, and tsv for each species.
+#         Input: ./bacterial_proteomes_PaxDb/
+#         Output: paxdb_proteomes.csv
+#
+#
+# ./data/main/muller_proteomes.R
+#         Description: Processes bacterial proteomes from Muller et al. 2020 [https://www.nature.com/articles/s41586-020-2402-x]
+#         Input: Supplementary Table 1 ("./table1_species_list_Muller.csv") and Supplementary Table 2 ("./table2_intensities_data_Muller.csv")
+#         Output: muller2020_processed.csv
+#
+#
+# ./data/main/added_proteomes.R
+#         Description: Assigns and calculates mass fractions for additional proteomic studies not included in previouslt processed.
+#         Input: Table S2 (Masson et al. 2021)[https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0250524]
+                 Supplementary Table S1 (Angel et al. 2010)[https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0013800]
+                 Supplementary Table S3 (Srivastava et al. 2020)[https://www.frontiersin.org/articles/10.3389/fmicb.2020.544785/full]
+                 Dataset EV6 and EV7 (Matteau et al. 2020)[https://www.embopress.org/doi/full/10.15252/msb.20209844]
+                 Table S3 (Osbak et al. 2016)[https://journals.plos.org/plosntds/article?id=10.1371/journal.pntd.0004988]
+#         Output: *.processed.csv
+#
+#
+# ./data/main/merge_proteomes.R
+#         Description: Merges all of the above-processed proteomic data. It is used for plotting Figure 5 in the manuscript. 
+#         Input: ./data/main/(with all associated directories and files)
+#         Output: quant_proteome_data.csv
+#
+#
+# ./data/main/cellular_traits_processing.R
+#         Description: Integrates different cell traits and proteomic data into a common file used for downstream analysis.
 #         Input  -- ./cell_traits_data/bacterial_envelopes_Sep232021 - {growth, size, other properties}.csv AND quant_proteome_data.csv
 #         Output -- growth_scaling.shape.genome.csv
-
-# ./data/main/cellular_traits_processing_envelope_thickness.R: The same as the previous script, but uses species-specific estimates of envelope thickness.
+#
+#
+# ./data/main/cellular_traits_processing_envelope_thickness.R
+#         Description: The same as the previous script, but uses species-specific estimates of envelope thickness.
 #         Input  -- ./cell_traits_data/bacterial_envelopes_Sep232021 - {growth, size, other properties}.csv
 #         Output -- growth_scaling.shape.envelope_corrected.csv
-
-# ./data/main/master.R: Estimates all parameters, performs regression analyses, and plots the figures in the manuscript.
+#
+#
+# ./data/main/master.R
+#         Description: Estimates all parameters, performs regression analyses, and plots the figures in the manuscript.
 # *****************************************
 
 
