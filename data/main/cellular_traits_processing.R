@@ -29,12 +29,12 @@ sphere_surf <- function(d1) {
   return(pi*d1^2)
 }
 
-helix_volume <- function(d_cell, d_helix, pitch, len_tot) {
+helix_volume <- function(d_cell, len_tot, pitch, d_helix) {
   actual_len <- sqrt(pitch^2 + (pi*(d_helix-d_cell))^2)*(len_tot/pitch)
   return(capsule_vol(d_cell, actual_len))
 }
 
-helix_surface <- function(d_cell, d_helix, pitch, len_tot) {
+helix_surface <- function(d_cell, len_tot, pitch, d_helix) {
   actual_len <- sqrt(pitch^2 + (pi*(d_helix-d_cell))^2)*(len_tot/pitch)
   return(capsule_surf(d_cell, actual_len))
 }
@@ -153,6 +153,85 @@ df_size_helix$S.mean <- mean_surf_hel
 df_size <- rbind(df_size_rod, df_size_sphere, df_size_helix)
 
 
+#========== Justification for fixed S/V across the cell cycle ==========
+# Set the color-blind scale
+colBlindScale <- c("#000000", "#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", 
+                   "#0072B2", "#D55E00", "#CC79A7", "#DB6D00", "#EF3B2C")
+colBlindScaleExtended <- c("#000000", "#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", 
+                           "#0072B2", "#D55E00", "#CC79A7", "#DB6D00", "#EF3B2C",
+                           "#67001F","#F7FCFD","#CB181D","#78C679","#F46D43","#A6CEE3","#FD8D3C","#A6D854","#D4B9DA","#6A51A3",
+                           "#7F0000","#D9D9D9","#FFF7BC","#F0F0F0","#C7EAE5","#003C30","#F16913","#FFF7FB","#8C6BB1","#C7E9B4",
+                           "#762A83","#FC9272","#AE017E","#F7F7F7","#DF65B0","#74C476")
+scaleFUN <- function(x) sprintf("%.2f", x)
+axes_style <- element_text(size=15, face="bold", colour = "black")
+
+tmp_size_sphere <- df_size_sphere
+tmp_size_rod <- df_size_rod
+tmp_size_helix <- df_size_helix
+
+birth_pi <- capsule_surf(df_size_sphere$D.mean,df_size_sphere$D.mean)/capsule_vol(df_size_sphere$D.mean,df_size_sphere$D.mean)
+div_pi <- capsule_surf(df_size_sphere$D.mean,2*df_size_sphere$D.mean)/capsule_vol(df_size_sphere$D.mean,2*df_size_sphere$D.mean)
+tmp_size_sphere$delta_pi <- birth_pi-div_pi
+
+birth_pi <- capsule_surf(df_size_rod$D.mean,df_size_rod$L.mean)/capsule_vol(df_size_rod$D.mean,df_size_rod$L.mean)
+div_pi <- (capsule_surf(df_size_rod$D.mean,2*df_size_rod$L.mean))/capsule_vol(df_size_rod$D.mean,2*df_size_rod$L.mean)
+tmp_size_rod$delta_pi <- birth_pi-div_pi
+
+birth_pi <- helix_surface(df_size_helix$D.mean,df_size_helix$L.mean,df_size_helix$P.mean,df_size_helix$Dh.mean)/
+  helix_volume(df_size_helix$D.mean,df_size_helix$L.mean,df_size_helix$P.mean,df_size_helix$Dh.mean)
+div_pi <- helix_surface(df_size_helix$D.mean,2*df_size_helix$L.mean,df_size_helix$P.mean,df_size_helix$Dh.mean)/
+  helix_volume(df_size_helix$D.mean,2*df_size_helix$L.mean,df_size_helix$P.mean,df_size_helix$Dh.mean)
+tmp_size_helix$delta_pi <- birth_pi-div_pi
+
+p_dist_delta_pi <- ggplot(rbind(tmp_size_helix,tmp_size_rod,tmp_size_sphere), aes(x=log10(S.mean/V.mean), y=log10(delta_pi), col=shape)) + 
+  geom_point(size=3.5, alpha=0.5) +
+  theme(aspect.ratio = 1,
+        axis.text.y   = axes_style,
+        axis.text.x   = axes_style,
+        axis.title.y  = axes_style,
+        axis.title.x  = axes_style,
+        axis.line = element_line(colour = "black"),
+        panel.background = element_rect(fill = 'grey75'),
+        legend.position = "none",
+        panel.border = element_rect(colour = "black", fill=NA, size=2)) +
+  scale_y_continuous(labels=scaleFUN) +
+  ylab(bquote(bold('S/V difference, Log'[10]*'['*Delta*Pi*' ('*mu*''*m^-1*')]'))) + xlab(bquote(bold('S/V, Log'[10]*'['*Pi*' ('*mu*''*m^-1*')]')))
+
+p_scaling_delta_pi  <- ggplot(rbind(tmp_size_helix,tmp_size_rod,tmp_size_sphere), aes(x=log10(delta_pi), fill=shape)) + 
+  geom_histogram(alpha=0.5, position="identity", color="black") +
+  theme(aspect.ratio = 1,
+        axis.text.y   = axes_style,
+        axis.text.x   = axes_style,
+        axis.title.y  = axes_style,
+        axis.title.x  = axes_style,
+        axis.line = element_line(colour = "black"),
+        panel.background = element_rect(fill = 'grey75'),
+        legend.position = "none",
+        panel.border = element_rect(colour = "black", fill=NA, size=2)) +
+  scale_y_continuous(labels=scaleFUN) +
+  xlab(bquote(bold('S/V difference, Log'[10]*'['*Delta*Pi*' ('*mu*''*m^-1*')]'))) + ylab(bquote(bold('Count'))) +
+  xlim(-3,1)
+
+legend_delta_pi <- ggplot(rbind(tmp_size_helix,tmp_size_rod,tmp_size_sphere), aes(x=log10(delta_pi), fill=shape)) + 
+  geom_histogram(alpha=0.5, position="identity", color="black") +
+  theme(aspect.ratio = 1,
+        axis.text.y   = axes_style,
+        axis.text.x   = axes_style,
+        axis.title.y  = axes_style,
+        axis.title.x  = axes_style,
+        axis.line = element_line(colour = "black"),
+        panel.background = element_rect(fill = 'grey75'),
+        legend.position = "right",
+        panel.border = element_rect(colour = "black", fill=NA, size=2)) +
+  scale_y_continuous(labels=scaleFUN) +
+  xlab(bquote(bold('S/V difference, Log'[10]*'['*Delta*Pi*' ('*mu*''*m^-1*')]'))) + ylab(bquote(bold('Count'))) +
+  xlim(-3,1)
+
+ggsave(file="./main/p_dist_delta_pi.pdf", plot=p_dist_delta_pi, width = 5, height = 5)
+ggsave(file="./main/p_scaling_delta_pi.pdf", plot=p_scaling_delta_pi, width = 5, height = 5)
+ggsave(file="./main/legend_delta_pi.pdf", plot=legend_delta_pi, width = 5, height = 5)
+
+
 #========== Correlation between volume and cell dry weight ==========
 df_dens <- read.csv("./cell_traits_data/bacterial_envelopes_Sep232021 - bacterial_cell_density.csv",
                      header = TRUE, sep = ",", stringsAsFactors = FALSE)
@@ -198,14 +277,20 @@ df_growth <- select(df_growth, species, Q10.correction, rRNA.genes, tRNA.genes)
 colnames(df_growth) <- c("species","growth_rate","rRNA.genes","tRNA.genes")
 
 df1 <- merge(df_size, df_growth, by="species", all.y = TRUE)
+df_proteomics <- df_proteomics[!(df_proteomics$species=="Mycoplasma pneumoniae"&df_proteomics$source=="Wang2012"),]
+tmp_source <- aggregate(df_proteomics$source, list(df_proteomics$species), toString, na.rm=TRUE)
+colnames(tmp_source) <- c("species","source")
+
 df_proteomics <- aggregate(df_proteomics[,c(2:4)], list(df_proteomics$species), mean, na.rm=TRUE)
+df_proteomics <- df_proteomics[,-4]
 colnames(df_proteomics)[1] <- "species"
+df_proteomics <- merge(df_proteomics,tmp_source,by = "species",all.y = FALSE)
+
 df2 <- merge(df_proteomics, df_size, by="species", all.x = TRUE)
+df2 <- select(df2, species, shape, V.mean, S.mean, lip_frac, ribo_frac, Total, source)
+colnames(df2) <- c("species", "shape", "V.mean","S.mean","lip_frac","ribo_frac","total_thickness_nm","source")
 
-df2 <- select(df2, species, shape, V.mean, S.mean, lip_frac, ribo_frac, Total)
-colnames(df2) <- c("species", "shape", "V.mean","S.mean","lip_frac","ribo_frac","total_thickness_nm")
-
-df2 <- df2[!(df2$species=="Desulfovibrio vulgaris"|df2$species=="Mycoplasma pneumoniae"),]
+df2 <- df2[df2$species!="Desulfovibrio vulgaris",]
 df1 <- select(df1, species, shape, V.mean, S.mean, growth_rate, Total, rRNA.genes, tRNA.genes)
 colnames(df1) <- c("species", "shape", "V.mean","S.mean", "growth_rate", "total_thickness_nm", "rRNA genes", "tRNA genes")
 
@@ -216,6 +301,8 @@ df1 <- merge(df1, df_metabolism, all.x = TRUE)
 
 write.csv(df1, "./main/growth_scaling.shape.genome.csv", row.names = FALSE)
 write.csv(df2, "./main/proteome_scaling.csv", row.names = FALSE)
+
+nrow(df2[!is.na(df2$V.mean)|!is.na(df2$S.mean),])
 
 sum(duplicated(df1$species))
 sum(duplicated(df2$species))

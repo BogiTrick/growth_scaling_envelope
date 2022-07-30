@@ -22,16 +22,15 @@ sphere_surf <- function(d1) {
   return(pi*d1^2)
 }
 
-helix_volume <- function(d_cell, d_helix, pitch, len_tot) {
+helix_volume <- function(d_cell, len_tot, pitch, d_helix) {
   actual_len <- sqrt(pitch^2 + (pi*(d_helix-d_cell))^2)*(len_tot/pitch)
   return(capsule_vol(d_cell, actual_len))
 }
 
-helix_surface <- function(d_cell, d_helix, pitch, len_tot) {
+helix_surface <- function(d_cell, len_tot, pitch, d_helix) {
   actual_len <- sqrt(pitch^2 + (pi*(d_helix-d_cell))^2)*(len_tot/pitch)
   return(capsule_surf(d_cell, actual_len))
 }
-
 
 #========== Calculating cell geomtery ==========
 df_size <- read.csv("./cell_traits_data/bacterial_envelopes_Sep232021 - cell_dimensions.csv",
