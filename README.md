@@ -1,5 +1,15 @@
 # growth_scaling_envelope
-
+# ************************************************
+# UPDATE (July 30, 2022):
+# 1) Files affected -- "cellular_traits_processing.R" and "cellular_traits_processing_envelope_thickness.R"
+#    Bug -- When calling functions helix_volume() and helix_surface(), helix diameter and helix length were swapped when passing arguments. Lines 
+#           Lines where bug is manifested are 105 to 107, and 117 to 119 in "cellular_traits_processing.R", 
+#           and 82 to 84 and 94 to 96 in "cellular_traits_processing_envelope_thickness.R"
+#    Current status -- Fixed by swapping arguments in function definition.
+#                      Statistics in the manuscript are updated but none of our conclusions are affected.
+# 2) Files affected -- 
+# ************************************************
+Fixed a bug when calculating cell volume and surface area of helical bacteria. In 
 
 # ********** Directory descriptions **********
 # ./data/cell_traits_data/: Contains the data on cell dimensions and growth rates. Other data (e.g., physiological and genomic properties) also included.
@@ -13,7 +23,7 @@
 # ********** Spreadsheets descriptions ***********
 # ./data/main/proteomic_fractions_full.csv: Escherichia coli proteomic mass fractions of ribosomes and envelope-producers under different treatments.
 # ./data/main/quant_proteome_data.csv: Proteomic mass fractions of ribosomes and envelope-producers under different treatments across species.
-# ./data/main/growth_scaling.shape.genome.csv: Data on surface area, internl volume, growth rate, envelope thickness, and genomic features of bacteria.
+# ./data/main/growth_scaling.shape.genome.csv: Data on surface area, internal volume, growth rate, envelope thickness, and genomic features of bacteria.
 # ./data/main/growth_scaling.shape.genome.envelope_corrected.csv: Same as above, but internal volume calculated using species-specific envelope thickness.
 # ./data/main/proteome_scaling.csv: Contains data on proteomic mass fractions, surface area, and internal volume across bacteria.
 
