@@ -333,14 +333,31 @@ dl_est <- 1.00
 y <- df_eco_nutri_Schmidt$phi_L
 x <- df_eco_nutri_Schmidt$growth_rates
 
-# We plug-in the regression equation into eqn. 26 to obtain the relation \Pi~\lambda_N; This is used to infer \kappa_l
+# The obtained \Pi~\lambda_N is plugged into eqn. 27, in order to account for changes in cell shape when inferring \kappa_l
+# We compare results across three different datasets that perturbed \Pi by changing nutrient quality
 # Non-linear regression to obtain kappaL estimate, then check for goodness-of-fit
-m <- nls(y~y_int+((10.14-3.298*dl_est)*epsPar/kappaL)*x-(3.298*epsPar/kappaL)*x^2)
-m_summary <- summary(m)
-m_summary
-kappaL_est <- m_summary$coefficients[2]
-kappaL_int <- m_summary$coefficients[1]
-cor(y,predict(m))
+m_Si <- nls(y~y_int+(lm_si_nutrients$coefficients[1]+lm_si_nutrients$coefficients[2]*x)*x*epsPar/kappaL)
+m_Basan <- nls(y~y_int+(lm_basan_nutrients$coefficients[1]+lm_basan_nutrients$coefficients[2]*x)*x*epsPar/kappaL)
+m_Volkmer <- nls(y~y_int+(lm_volkmer_nutrients$coefficients[1]+lm_volkmer_nutrients$coefficients[2]*x)*x*epsPar/kappaL)
+
+m_summary_Si <- summary(m_Si)
+m_summary_Si
+kappaL_est_Si <- m_summary_Si$coefficients[2]
+kappaL_int_Si <- m_summary_Si$coefficients[1]
+
+m_summary_Basan <- summary(m_Basan)
+m_summary_Basan
+kappaL_est_Basan <- m_summary_Basan$coefficients[2]
+kappaL_int_Basan <- m_summary_Basan$coefficients[1]
+
+m_summary_Volkmer <- summary(m_Volkmer)
+m_summary_Volkmer
+kappaL_est_Volkmer <- m_summary_Volkmer$coefficients[2]
+kappaL_int_Volkmer <- m_summary_Volkmer$coefficients[1]
+
+cor(y,predict(m_Si))
+cor(y,predict(m_Volkmer))
+cor(y,predict(m_Basan))
 
 # The line is a best fit, given the changes in Pi across growth conditions
 df_fin_Schmidt <- df_eco_nutri[df_eco_nutri$source=="Schmidt2016",]
@@ -356,7 +373,7 @@ df_fin_Forchhammer <- df_eco_nutri[df_eco_nutri$source=="Forchhammer1971",]
 df_fin_Mori <- df_eco_nutri[df_eco_nutri$source=="Mori2021",]
 
 p_lipo_nut_pert <- ggplot() + 
-  stat_function(fun=function(x) kappaL_int+((10.14-3.298*dl_est)*epsPar/kappaL_est)*x-(3.298*epsPar/kappaL_est)*x^2, aes(colour = "g"), size = 1.5) +
+  stat_function(fun=function(x) kappaL_int_Volkmer+(lm_volkmer_nutrients$coefficients[1]*epsPar/kappaL_est_Volkmer)*x+(lm_volkmer_nutrients$coefficients[2]*epsPar/kappaL_est_Volkmer)*x^2, aes(colour = "g"), size = 1.5) +
   geom_point(size=4.5, stroke=1.5, shape=18, aes(x=df_fin_Valgepea$growth_rates, y=df_fin_Valgepea$phi_L, colour = "d")) +
   geom_point(size=4.5, stroke=1.5, shape=19, aes(x=df_fin_Li$growth_rates, y=df_fin_Li$phi_L, colour = "e")) +
   geom_point(size=4.5, stroke=1.5, shape=0, aes(x=df_fin_Peebo$growth_rates, y=df_fin_Peebo$phi_L, colour = "f")) +
@@ -385,6 +402,29 @@ p_lipo_nut_pert <- ggplot() +
 p_lipo_nut_pert
 
 
+p_lipo_lambda_alt <- ggplot() + 
+  stat_function(fun=function(x) kappaL_int_Si+(lm_si_nutrients$coefficients[1]+lm_si_nutrients$coefficients[2]*x)*(epsPar*x/kappaL_est_Si), aes(colour = "d"), size = 1.5) +
+  stat_function(fun=function(x) kappaL_int_Basan+(lm_basan_nutrients$coefficients[1]+lm_basan_nutrients$coefficients[2]*x)*(epsPar*x/kappaL_est_Basan), aes(colour = "e"), size = 1.5) +
+  stat_function(fun=function(x) kappaL_int_Volkmer+(lm_volkmer_nutrients$coefficients[1]+lm_volkmer_nutrients$coefficients[2]*x)*(epsPar*x/kappaL_est_Volkmer), aes(colour = "g"), size = 1.5) +
+  geom_point(size=4.5, stroke=1.5, shape=1, aes(x=df_fin_Schmidt$growth_rates, y=df_fin_Schmidt$phi_L, colour = "g")) +
+  theme(aspect.ratio = 1,
+        axis.text.y   = axes_style,
+        axis.text.x   = axes_style,
+        axis.title.y  = axes_style,
+        axis.title.x  = axes_style,
+        axis.line = element_line(colour = "black"),
+        panel.background = element_rect(fill = 'grey75'),
+        legend.position = "right",
+        panel.border = element_rect(colour = "black", fill=NA, size=2)) +
+  scale_colour_manual(name=bquote("Source of "*Pi*"("*lambda[N]*")"), values = c(colBlindScale[4], colBlindScale[5], colBlindScale[7], colBlindScale[7]), 
+                      labels = c("Si2017","Basan2015","Volkmer2011","Schmidt2016"),
+                      guide = guide_legend(override.aes = list(linetype = c(rep("solid", 3)), shape = c(rep(NA,3))))) +
+  xlab(bquote(bold('Growth rate, '*lambda*' (h'^-1*')'))) + ylab(bquote(bold('Envelope-producer mass fraction, '*Phi[L])))
+p_lipo_lambda_alt
+
+
+# By substituting \Pi in formula for \Phi_R=f(\lambda_T), one accounts for changes in cell shape with growth rate when estimating \kappa_n
+kappaL_est <- kappaL_est_Si
 phiR_pertT_1 <-function(x,kN,y_int) {
   y_int+((kappaL_est+6.818*epsPar*(kappaL_est+kN))*x)/(kappaL_est*(dp_est-kN))
 }
@@ -421,7 +461,7 @@ phiR_pertT_9 <-function(x,kN,y_int) {
   y_int+((kappaL_est+4.156*epsPar*(kappaL_est+kN))*x)/(kappaL_est*(dp_est-kN))
 }
 
-# Phi_R and growth rates from Si2017
+# Phi_R and growth rates from Si2017; Then infer \kappa_n
 y <- df_si_1$RNA.protein
 x <- df_si_1$growth.rate..1.hours.
 m_kN1 <- nls(y~phiR_pertT_1(x,kN,y_int))
@@ -529,10 +569,11 @@ p_ribo_ab_pert <- ggplot() +
   guides(colour=guide_legend(override.aes=list(shape=c(15,16,17,18,19,0,1,2,5),linetype=0,stroke=1.5)))
 p_ribo_ab_pert
 
+# Finally, infer \kappa_t from Eq 27; Note that it is independent of \Pi so there is no need to account for cell shape
 kappaT_est <- (1-dp_est*olsR$coefficients[2])/olsR$coefficients[2]
 
 
-# Calculating standard error of the estimate by error propagation
+# Correct for temperature using Q20
 q10_factor <- 2.5^((20-37)/10)
 
 kN1_q10_alt <- q10_corrected(kappaN1_est, 2.5, 37)
@@ -562,6 +603,8 @@ ggsave(file="p_phiR_ab_pert.pdf", plot=p_ribo_ab_pert, width = 5.2, height = 5.2
 ggsave(file="p_lipo_nutri.pdf", plot=p_lipo_nut_pert, width = 5.2, height = 5.2)
 ggsave(file="p_sv_growth_nut.pdf", plot=p_sv_growth_nut, width = 5.2, height = 5.2)
 ggsave(file="p_sv_growth_ab.pdf", plot=p_sv_growth_ab, width = 5.2, height = 5.2)
+ggsave(file="p_lipo_lambda_alt.pdf", plot=p_lipo_lambda_alt, width = 5.2, height = 5.2)
+
 
 #========== Plotting legends ==========
 legend_si <- ggplot() + 
@@ -719,11 +762,16 @@ ggsave(file="legend_sv_ab.pdf", legend_sv_ab, width = 8, height = 8)
 
 
 #========== Inferring capacities from OLS slopes ==========
+# The rational here is that \Pi is largely independent of \lambda_T, given that it only shows negative dependence in two types of media
+# Therefore, one can assume that \Pi is fixed and use the value which is average for E. coli
+
 SAVpar <- 5 # Rough average in our dataset; More precisely, it would be 4.94 but this might change if more data is added
 epsPar <- (0.30/0.55)/SAVpar
 dp_est <- 0.05 # page 2896 in Nath and Koch 1970 (taken for slowly decaying component)
 dl_est <- 1.00
 
+# We take \kappa_l inferred using data on \Pi~\lambda_N. This is because we use proteomic data from Schmidt2016, and they the same media as Volkmer2011
+kappaL_est <- kappaL_est_Volkmer
 kappaN_est <- function(x) {
   (kappaL_est*(x*dp_est-epsPar*SAVpar-1))/(x*kappaL_est+epsPar*SAVpar)
 }
@@ -734,6 +782,7 @@ q10_factor <- 2.5^((20-37)/10)
 
 # Phi_R ~ lambda_N
 # Get the estimate of slope and its variance
+olsR
 var_b <- (olsR$coefficients[2,2]*sqrt(20))^2
 est_b <- olsR$coefficients[2,1]
 var_kT <- (q10_factor^2/est_b^4)*var_b
@@ -741,7 +790,8 @@ kT_q10_err <- sqrt(var_kT)/sqrt(20)
 
 # Phi_L ~ f(lambda_N)
 # Get the estimate of slope and its variance
-var_kL <- (sqrt(20)*m_summary$parameters[2,2])^2
+m_summary_Volkmer
+var_kL <- (sqrt(20)*m_summary_Volkmer$parameters[2,2])^2
 kL_q10_err <- sqrt(q10_factor^2*var_kL)/sqrt(20)
 
 # Phi_R ~ lambda_T
@@ -776,7 +826,7 @@ kN3_q10 <- q10_corrected(kappaN3_est, 2.5, 37)
 kN4_q10 <- q10_corrected(kappaN4_est, 2.5, 37)
 kN5_q10 <- q10_corrected(kappaN5_est, 2.5, 37)
 kN6_q10 <- q10_corrected(kappaN6_est, 2.5, 37)
-kL_q10 <- kL_q10_alt #q10_corrected(kappaL_est, 2.5, 37)
+kL_q10 <- q10_corrected(kappaL_est, 2.5, 37)
 kT_q10 <- q10_corrected(kappaT_est, 2.5, 37)
 
 dp_q10 <- q10_corrected(dp_est, 2.5, 37)
@@ -1032,13 +1082,16 @@ df_lambda_full <- rbind(df_lambda, df_lambda_env_corr[!is.na(df_lambda_env_corr$
 df_lambda_full$SV.mean <- df_lambda_full$S.mean/df_lambda_full$V.mean
 
 # Add Grant2021 data
-df_Grant <- read.csv("/home/bogi/Desktop/growth_rate/data/cell_size_data/ltee_data/grant2021.csv")
-df_Grant$S.mean <- capsule_surf(df_Grant$mean.width, df_Grant$mean.length)
-df_Grant$V.mean <- capsule_vol(df_Grant$mean.width, df_Grant$mean.length)
+df_Grant <- read.csv("/home/bogi/Desktop/growth_rate/data/cell_size_data/ltee_data/grant_wiser_full.csv")
+df_Grant$S.mean <- capsule_surf(df_Grant$mean.width-2*L_env, df_Grant$mean.length-2*L_env)
+df_Grant$V.mean <- capsule_vol(df_Grant$mean.width-2*L_env, df_Grant$mean.length-2*L_env)
 df_Grant$SV.mean <- df_Grant$S.mean/df_Grant$V.mean
-df_Grant$fitnessMP <- df_Grant$fitnessMP*0.7726 # Value from Table 1 in Vasi1994
-colnames(df_Grant)[2] <- "growth_rate"
+df_Grant$fitnessClones <- df_Grant$fitnessClones*0.7726 # Value from Table 1 in Vasi1994
+colnames(df_Grant)[3] <- "growth_rate"
 df_Grant$growth_rate <- q10_corrected(df_Grant$growth_rate,2.5,37)
+df_Grant_avg <- df_Grant %>% group_by(generation, ID) %>%  summarise(SV.mean=mean(SV.mean, na.rm = TRUE), growth_rate=mean(growth_rate, na.rm = TRUE), .groups='drop')
+
+mean(capsule_vol(df_volkmer$cell_width.mean-2*L_env,df_volkmer$cell_length.mean-2*L_env))
 
 # Add Lennon2021 data
 df_Lennon <- read.csv("/home/bogi/Desktop/growth_rate/data/cell_size_data/ltee_data/lennon2021.csv")
@@ -1055,7 +1108,6 @@ df_Gallet$S.mean <- gammaShapeConst*df_Gallet$V.mean^(2/3)
 df_Gallet$SV.mean <- df_Gallet$S.mean/df_Gallet$V.mean
 df_Gallet$growth_rate <- q10_corrected(df_Gallet$growth_rate,2.5,37)
 
-df_Grant_avg <- aggregate(df_Grant, by=list(df_Grant$generation, df_Grant$ID), mean, na.rm = TRUE)
 df_Lennon_wt <- df_Lennon[df_Lennon$ID=="Mycoplasma mycoides (Moger-Reischer2021)",]
 df_Lennon_jcvi <- df_Lennon[df_Lennon$ID=="JCVI Mycoplasma (Moger-Reischer2021)",]
 
@@ -1167,6 +1219,7 @@ grant_legend <- ggplot() +
   geom_point(size=3.5, stroke=1.5, shape=25, aes(x=log10(df_Grant_avg$SV.mean), y=log10(df_Grant_avg$growth_rate), colour="b")) +
   geom_point(size=3.5, stroke=1.5, shape=1, aes(x=log10(df_Lennon_wt$SV.mean), y=log10(df_Lennon_wt$growth_rate), colour="c")) +
   geom_point(size=3.5, stroke=1.5, shape=0, aes(x=log10(df_Lennon_jcvi$SV.mean), y=log10(df_Lennon_jcvi$growth_rate), colour="d")) +
+  geom_point(size=3.5, stroke=1.5, shape=23, aes(x=log10(df_Lennon_jcvi$SV.mean), y=log10(df_Lennon_jcvi$growth_rate), colour="e")) +
   theme(aspect.ratio = 1,
         axis.text.y   = axes_style,
         axis.text.x   = axes_style,
@@ -1178,16 +1231,13 @@ grant_legend <- ggplot() +
         plot.margin=unit(c(1,1,1.5,1.2),"cm"),
         panel.border = element_rect(colour = "black", fill=NA, size=2)) +
   ylab(bquote(bold('Growth rate, Log'[10]*'['*lambda*' (h'^-1*')]'))) + xlab(bquote(bold('S/V, Log'[10]*'['*Pi*' ('*mu*''*m^-1*')]'))) +
-  scale_colour_manual(name="Source", values = c("x"="black","a"="red","b"="red","c"="red","d"="red"),
+  scale_colour_manual(name="Source", values = c("x"="black","a"="red","b"="red","c"="red","d"="red","e"="red"),
                       labels = c("Bacterial species","Escherichia coli (Gallet2017)","Escherichia coli (Grant2021)",
-                                 "M. mycoides (Moger-Reisher2021)","JCVI M. mycoides (Moger-Reisher2021)")) +
-  scale_shape_manual(name="Nutrient capacity", values = c(1,18,25,1,0), labels = c("x","a","b","c","d")) +
-  guides(colour=guide_legend(override.aes=list(shape=c(1,18,25,1,0),linetype=0,stroke=1.5))) +
+                                 "M. mycoides (Moger-Reisher2021)","JCVI M. mycoides (Moger-Reisher2021)","Escherichia coli (Favate2021)")) +
+  scale_shape_manual(name="Nutrient capacity", values = c(1,18,25,1,0,23), labels = c("x","a","b","c","d","e")) +
+  guides(colour=guide_legend(override.aes=list(shape=c(1,18,25,1,0,23),linetype=0,stroke=1.5))) +
   ylim(c(-2.5,0.2))
 grant_legend <- cowplot::get_legend(grant_legend)
-
-df_Grant_avg[df_Grant_avg$Group.1==0,]$SV.mean
-df_Grant_avg[df_Grant_avg$Group.1==50,]$SV.mean
 
 df_phi <- read.csv("proteome_scaling.csv", skip = 0, header = TRUE, sep = ",", stringsAsFactors = FALSE)
 p_scaled_ribo_frac <- ggplot(df_phi, aes(x=log10(S.mean/V.mean), y=log10(ribo_frac))) + 
@@ -1204,6 +1254,8 @@ p_scaled_ribo_frac <- ggplot(df_phi, aes(x=log10(S.mean/V.mean), y=log10(ribo_fr
   stat_function(fun=function(x) log10(riboFrac_env(kN6_q10,kT_q10,kL_q10,dp_q10,dl_q10,epsPar,10^x)), aes(colour="f"), 
                 size=line_thick, n=plot_points) +
   geom_point(size = 2.0, shape=1, stroke=1.5, alpha=0.75, col="black") +
+  geom_point(size = 3.5, stroke=1.5, shape=23, alpha=0.75, aes(x=log10(df_Grant_avg[df_Grant_avg$generation==0,]$SV.mean), y=log10(0.2100)), col="red") +
+  geom_point(size = 3.5, stroke=1.5, shape=23, alpha=0.75, aes(x=log10(df_Grant_avg[df_Grant_avg$generation==50,]$SV.mean), y=log10(0.2177)), col="red") +
   theme(aspect.ratio = 1,
         axis.text.y   = axes_style,
         axis.text.x   = axes_style,
@@ -1221,6 +1273,7 @@ p_scaled_ribo_frac <- ggplot(df_phi, aes(x=log10(S.mean/V.mean), y=log10(ribo_fr
   ylim(c(-2.0,0.0))
 p_scaled_ribo_frac
 
+
 p_scaled_lipo_frac <- ggplot(df_phi, aes(x=log10(S.mean/V.mean), y=log10(lip_frac))) + 
   stat_function(fun=function(x) log10(lipoFrac_env(kN1_q10,kT_q10,kL_q10,dp_q10,dl_q10,epsPar,10^x)), 
                 aes(colour="a"), size=line_thick, n=plot_points) +
@@ -1235,6 +1288,8 @@ p_scaled_lipo_frac <- ggplot(df_phi, aes(x=log10(S.mean/V.mean), y=log10(lip_fra
   stat_function(fun=function(x) log10(lipoFrac_env(kN6_q10,kT_q10,kL_q10,dp_q10,dl_q10,epsPar,10^x)), 
                 aes(colour="f"), size=line_thick, n=plot_points) +
   geom_point(size = 2.0, shape=1, stroke=1.5, alpha=0.75, col="black") +
+  geom_point(size = 3.5, stroke=1.5, shape=23, alpha=0.75, aes(x=log10(df_Grant_avg[df_Grant_avg$generation==0,]$SV.mean), y=log10(0.034)), col="red") +
+  geom_point(size = 3.5, stroke=1.5, shape=23, alpha=0.75, aes(x=log10(df_Grant_avg[df_Grant_avg$generation==50,]$SV.mean), y=log10(0.028)), col="red") +
   theme(aspect.ratio = 1,
         axis.text.y   = axes_style,
         axis.text.x   = axes_style,
@@ -1264,17 +1319,67 @@ ggsave(file="grant_growth_scaling.pdf", plot=grantPlot, width = 5.2, height = 5.
 
 #========== Plots of growth-scaling under alternative parameters (from Si2017) ==========
 sv_array <- seq(0.5,2.0,0.01)
+kappaN_est_alt <- function(x, yKappa_L) {(yKappa_L*(x*dp_est-epsPar*SAVpar-1))/(x*yKappa_L+epsPar*SAVpar)}
+
+kappaN1_est_Basan <- kappaN_est_alt(olsR_ab1$coefficients[2], kappaL_est_Basan)
+kappaN2_est_Basan <- kappaN_est_alt(olsR_ab2$coefficients[2], kappaL_est_Basan)
+kappaN3_est_Basan <- kappaN_est_alt(olsR_ab3$coefficients[2], kappaL_est_Basan)
+kappaN4_est_Basan <- kappaN_est_alt(olsR_ab4$coefficients[2], kappaL_est_Basan)
+kappaN5_est_Basan <- kappaN_est_alt(olsR_ab5$coefficients[2], kappaL_est_Basan)
+kappaN6_est_Basan <- kappaN_est_alt(olsR_ab6$coefficients[2], kappaL_est_Basan)
+kN1_Basan_q10 <- q10_corrected(kappaN1_est_Basan, 2.5, 37)
+kN2_Basan_q10 <- q10_corrected(kappaN2_est_Basan, 2.5, 37)
+kN3_Basan_q10 <- q10_corrected(kappaN3_est_Basan, 2.5, 37)
+kN4_Basan_q10 <- q10_corrected(kappaN4_est_Basan, 2.5, 37)
+kN5_Basan_q10 <- q10_corrected(kappaN5_est_Basan, 2.5, 37)
+kN6_Basan_q10 <- q10_corrected(kappaN6_est_Basan, 2.5, 37)
+kL_Basan_q10 <- q10_corrected(kappaL_est_Basan, 2.5, 37)
+kN_q10_mean_Basan <- mean(c(kN1_Basan_q10, kN2_Basan_q10, kN3_Basan_q10, kN4_Basan_q10, kN5_Basan_q10, kN6_Basan_q10))
+
+kappaN1_est_Si <- kappaN_est_alt(olsR_ab1$coefficients[2], kappaL_est_Si)
+kappaN2_est_Si <- kappaN_est_alt(olsR_ab2$coefficients[2], kappaL_est_Si)
+kappaN3_est_Si <- kappaN_est_alt(olsR_ab3$coefficients[2], kappaL_est_Si)
+kappaN4_est_Si <- kappaN_est_alt(olsR_ab4$coefficients[2], kappaL_est_Si)
+kappaN5_est_Si <- kappaN_est_alt(olsR_ab5$coefficients[2], kappaL_est_Si)
+kappaN6_est_Si <- kappaN_est_alt(olsR_ab6$coefficients[2], kappaL_est_Si)
+kN1_Si_q10 <- q10_corrected(kappaN1_est_Si, 2.5, 37)
+kN2_Si_q10 <- q10_corrected(kappaN2_est_Si, 2.5, 37)
+kN3_Si_q10 <- q10_corrected(kappaN3_est_Si, 2.5, 37)
+kN4_Si_q10 <- q10_corrected(kappaN4_est_Si, 2.5, 37)
+kN5_Si_q10 <- q10_corrected(kappaN5_est_Si, 2.5, 37)
+kN6_Si_q10 <- q10_corrected(kappaN6_est_Si, 2.5, 37)
+kL_Si_q10 <- q10_corrected(kappaL_est_Si, 2.5, 37)
+kN_q10_mean_Si <- mean(c(kN1_Si_q10, kN2_Si_q10, kN3_Si_q10, kN4_Si_q10, kN5_Si_q10, kN6_Si_q10))
+
+kN_q10_mean
+kN_q10_mean_alt
+kN_q10_mean_Si
+kN_q10_mean_Basan
+
+kL_q10
+kL_q10_alt
+kL_Si_q10
+kL_Basan_q10
+
 p_scaled_growth_alt <- ggplot(data.frame(x = sv_array), aes(x)) + 
-  stat_function(fun=function(x) log10(lambda_env(kN_q10_mean_alt, kT_q10, kL_q10_alt, epsPar, 10^x, dp_q10, dl_q10)), 
-                col="red", size=line_thick, n=plot_points, linetype="dashed") +
   stat_function(fun=function(x) log10(lambda_env(kN_q10_mean, kT_q10, kL_q10, epsPar, 10^x, dp_q10, dl_q10)), 
-                col="red", size=line_thick, n=plot_points) +
+                aes(col="a"), size=line_thick, n=plot_points) +
+  stat_function(fun=function(x) log10(lambda_env(kN_q10_mean_Basan, kT_q10, kL_Basan_q10, epsPar, 10^x, dp_q10, dl_q10)), 
+                aes(col="b"), size=1, n=plot_points) +
+  stat_function(fun=function(x) log10(lambda_env(kN_q10_mean_Si, kT_q10, kL_Si_q10, epsPar, 10^x, dp_q10, dl_q10)), 
+                aes(col="c"), size=1, n=plot_points, linetype="dashed") +
+  stat_function(fun=function(x) log10(lambda_env(kN_q10_mean_alt, kT_q10, kL_q10_alt, epsPar, 10^x, dp_q10, dl_q10)), 
+                aes(col="d"), size=line_thick, n=plot_points) +
+  scale_colour_manual(bquote("Source of "*Pi*"("*lambda[N]*")"), values = c("a"=colBlindScale[2],"b"=colBlindScale[3],
+                                                                            "c"=colBlindScale[4],"d"=colBlindScale[5]), 
+                      labels = c(bquote("Volkmer2011, "*Pi*"("*lambda[T]*") const."), bquote("Basan2015, "*Pi*"("*lambda[T]*") const."),
+                                 bquote("Si2017, "*Pi*"("*lambda[T]*") const."), bquote("Si2017, "*Pi*"("*lambda[T]*") varies"))) +
   theme(aspect.ratio = 1,
         axis.text.y   = axes_style,
         axis.text.x   = axes_style,
         axis.title.y  = axes_style,
         axis.title.x  = axes_style,
-        legend.position = "left",
+        legend.position = "none",
         axis.line = element_line(colour = "black"),
         panel.background = element_rect(fill = 'grey75'),
         plot.margin=unit(c(1,1,1.5,1.2),"cm"),
@@ -1284,40 +1389,88 @@ p_scaled_growth_alt <- ggplot(data.frame(x = sv_array), aes(x)) +
 p_scaled_growth_alt
 
 p_scaled_ribo_frac_alt <- ggplot(data.frame(x = sv_array), aes(x)) + 
-  stat_function(fun=function(x) log10(riboFrac_env(kN1_q10_alt,kT_q10,kL_q10_alt,dp_q10,dl_q10,epsPar,10^x)), 
-                col="red", size=line_thick, n=plot_points, linetype="dashed") +
-  stat_function(fun=function(x) log10(riboFrac_env(kN1_q10,kT_q10,kL_q10,dp_q10,dl_q10,epsPar,10^x)), 
-                col="red", size=line_thick, n=plot_points) +
+  stat_function(fun=function(x) log10(riboFrac_env(kN1_q10, kT_q10, kL_q10, dp_q10, dl_q10, epsPar, 10^x)), 
+                aes(col="a"), size=line_thick, n=plot_points) +
+  stat_function(fun=function(x) log10(riboFrac_env(kN_q10_mean_Basan, kT_q10, kL_Basan_q10, dp_q10, dl_q10, epsPar, 10^x)), 
+                aes(col="b"), size=1, n=plot_points) +
+  stat_function(fun=function(x) log10(riboFrac_env(kN_q10_mean_Si, kT_q10, kL_Si_q10, dp_q10, dl_q10, epsPar,10^x)), 
+                aes(col="c"), size=1, n=plot_points, linetype="dashed") +
+  stat_function(fun=function(x) log10(riboFrac_env(kN_q10_mean_alt, kT_q10, kL_q10_alt, dp_q10, dl_q10, epsPar, 10^x)), 
+                aes(col="d"), size=line_thick, n=plot_points) +
+  scale_colour_manual(bquote("Source of "*Pi*"("*lambda[N]*")"), values = c("a"=colBlindScale[2],"b"=colBlindScale[3],
+                                                                            "c"=colBlindScale[4],"d"=colBlindScale[5]), 
+                      labels = c(bquote("Volkmer2011, "*Pi*"("*lambda[T]*") const."), bquote("Basan2015, "*Pi*"("*lambda[T]*") const."),
+                                 bquote("Si2017, "*Pi*"("*lambda[T]*") const."), bquote("Si2017, "*Pi*"("*lambda[T]*") varies"))) +
   theme(axis.text.y   = axes_style,
         axis.text.x   = axes_style,
         axis.title.y  = axes_style,
         axis.title.x  = axes_style,
+        legend.position = "none",
         axis.line = element_line(colour = "black"),
         panel.background = element_rect(fill = 'grey75'),
         plot.margin=unit(c(1,1,1.5,1.2),"cm"),
         panel.border = element_rect(colour = "black", fill=NA, size=2)) +
   ylab(bquote(bold('Ribosomal mass fraction, Log'[10]*'['*Phi[R]*']'))) + xlab(bquote(bold('S/V, Log'[10]*'['*Pi*' ('*mu*''*m^-1*')]'))) +
   ylim(c(-2.0,0.0))
+p_scaled_ribo_frac_alt
 
 p_scaled_lipo_frac_alt <- ggplot(data.frame(x = sv_array), aes(x)) + 
-  stat_function(fun=function(x) log10(lipoFrac_env(kN1_q10_alt,kT_q10,kL_q10_alt,dp_q10,dl_q10,epsPar,10^x)), 
-                col="red", size=line_thick, n=plot_points, linetype="dashed") +
-  stat_function(fun=function(x) log10(lipoFrac_env(kN1_q10,kT_q10,kL_q10,dp_q10,dl_q10,epsPar,10^x)), 
-                col="red", size=line_thick, n=plot_points) +
+  stat_function(fun=function(x) log10(lipoFrac_env(kN1_q10, kT_q10, kL_q10, dp_q10, dl_q10, epsPar, 10^x)), 
+                aes(col="a"), size=line_thick, n=plot_points) +
+  stat_function(fun=function(x) log10(lipoFrac_env(kN_q10_mean_Basan,kT_q10, kL_Basan_q10, dp_q10, dl_q10, epsPar, 10^x)), 
+                aes(col="b"), size=1, n=plot_points) +
+  stat_function(fun=function(x) log10(lipoFrac_env(kN_q10_mean_Si, kT_q10, kL_Si_q10, dp_q10, dl_q10, epsPar, 10^x)), 
+                aes(col="c"), size=1, n=plot_points, linetype="dashed") +
+  stat_function(fun=function(x) log10(lipoFrac_env(kN_q10_mean_alt, kT_q10, kL_q10_alt, dp_q10, dl_q10, epsPar, 10^x)), 
+                aes(col="d"), size=line_thick, n=plot_points) +
+  scale_colour_manual(bquote("Source of "*Pi*"("*lambda[N]*")"), values = c("a"=colBlindScale[2],"b"=colBlindScale[3],
+                                                                            "c"=colBlindScale[4],"d"=colBlindScale[5]), 
+                      labels = c(bquote("Volkmer2011, "*Pi*"("*lambda[T]*") const."), bquote("Basan2015, "*Pi*"("*lambda[T]*") const."),
+                                 bquote("Si2017, "*Pi*"("*lambda[T]*") const."), bquote("Si2017, "*Pi*"("*lambda[T]*") varies"))) +
   theme(axis.text.y   = axes_style,
         axis.text.x   = axes_style,
         axis.title.y  = axes_style,
         axis.title.x  = axes_style,
+        legend.position = "none",
         axis.line = element_line(colour = "black"),
         panel.background = element_rect(fill = 'grey75'),
         plot.margin=unit(c(1,1,1.5,1.2),"cm"),
         panel.border = element_rect(colour = "black", fill=NA, size=2)) +
   ylab(bquote(bold('Envelope-producer mass fraction, Log'[10]*'['*Phi[L]*']'))) + xlab(bquote(bold('S/V, Log'[10]*'['*Pi*' ('*mu*''*m^-1*')]'))) +
   ylim(c(-2.75,-1.0))
+p_scaled_lipo_frac_alt
+
+p_scaled_legend_alt <- ggplot(data.frame(x = sv_array), aes(x)) +
+  stat_function(fun=function(x) log10(lipoFrac_env(kN1_q10, kT_q10, kL_q10, dp_q10, dl_q10, epsPar, 10^x)), 
+                aes(col="a"), size=line_thick, n=plot_points) +
+  stat_function(fun=function(x) log10(lipoFrac_env(kN_q10_mean_Basan,kT_q10, kL_Basan_q10, dp_q10, dl_q10, epsPar, 10^x)), 
+                aes(col="b"), size=1, n=plot_points) +
+  stat_function(fun=function(x) log10(lipoFrac_env(kN_q10_mean_Si, kT_q10, kL_Si_q10, dp_q10, dl_q10, epsPar, 10^x)), 
+                aes(col="c"), size=1, n=plot_points, linetype="dashed") +
+  stat_function(fun=function(x) log10(lipoFrac_env(kN_q10_mean_alt, kT_q10, kL_q10_alt, dp_q10, dl_q10, epsPar, 10^x)), 
+                aes(col="d"), size=line_thick, n=plot_points) +
+  scale_colour_manual(bquote("Source of "*Pi*"("*lambda[N]*")"), values = c("a"=colBlindScale[2],"b"=colBlindScale[3],
+                                                                            "c"=colBlindScale[4],"d"=colBlindScale[5]), 
+                      labels = c(bquote("Volkmer2011, "*Pi*"("*lambda[T]*") const."), bquote("Basan2015, "*Pi*"("*lambda[T]*") const."),
+                                 bquote("Si2017, "*Pi*"("*lambda[T]*") const."), bquote("Si2017, "*Pi*"("*lambda[T]*") varies"))) +
+  theme(axis.text.y   = axes_style,
+        axis.text.x   = axes_style,
+        axis.title.y  = axes_style,
+        axis.title.x  = axes_style,
+        legend.position = "left",
+        axis.line = element_line(colour = "black"),
+        panel.background = element_rect(fill = 'grey75'),
+        plot.margin=unit(c(1,1,1.5,1.2),"cm"),
+        panel.border = element_rect(colour = "black", fill=NA, size=2)) +
+  ylab(bquote(bold('Envelope-producer mass fraction, Log'[10]*'['*Phi[L]*']'))) + xlab(bquote(bold('S/V, Log'[10]*'['*Pi*' ('*mu*''*m^-1*')]'))) +
+  ylim(c(-2.75,-1.0))
+p_scaled_legend_alt
+p_scaled_legend_alt <- cowplot::get_legend(p_scaled_legend_alt)
 
 ggsave(file="p_scaled_growth_alt.pdf", plot=p_scaled_growth_alt, width = 5.2, height = 5.2)
 ggsave(file="p_scaled_ribo_frac_alt.pdf", plot=p_scaled_ribo_frac_alt, width = 5.2, height = 5.2)
 ggsave(file="p_scaled_lipo_frac_alt.pdf", plot=p_scaled_lipo_frac_alt, width = 5.2, height = 5.2)
+ggsave(file="p_scaled_legend_alt.pdf", plot=p_scaled_legend_alt, width = 5.2, height = 5.2)
 
 
 #========== Regression analysis ==========
@@ -1875,3 +2028,74 @@ ggsave(file="p_sensitivity_analysis_dp.pdf", plot=p_sensitivity_analysis_dp, wid
 ggsave(file="sensitivity_legend.pdf", plot=sensitivity_legend, width = 5.2, height = 5.2)
 
 
+#========== The scaling of metabolic rate in LTEE ==========
+# Surface area taken to be 4.32 um^2
+lipPerSurf <- (22*10^6/3)/4.32
+pgnPerSurf <- (3.5*10^6)/4.32
+lpsPerSurf <- 1.43*10^6/4.32
+aaPerSurf <- 78*10^6/4.32
+lipPerUnit <- lipPerSurf/lipPerSurf
+
+# 4 ATP for direct costs of elongating a polypeptide (from Lynch and Marinov 2015)
+# The parenthesis contains the number of NADH, NADPH (from Figure 2D in Mahmoudabadi2020). Each is energetically equivalent to 2 ATPs.
+aaDirCost <- 2+2*mean(c(1,3,1,1,4,1,1,0,-2,5,1,4,8,2,3,0,3,1,1,2))
+lppPerAACost <- 4+aaDirCost
+
+pgnPerUnit <- pgnPerSurf/lipPerSurf
+lpsPerUnit <- lpsPerSurf/lipPerSurf
+aaPerUnit <- aaPerSurf/lipPerSurf
+
+qlPar <- 74*3*lipPerUnit + 17*pgnPerUnit + 301*lpsPerUnit + lppPerAACost*aaPerUnit
+ls <- ((27 + 4)*aaPerUnit + 223*pgnPerUnit + 232*3*lipPerUnit + 2243*lpsPerUnit)/27
+
+mean_vol_Volkmer <- mean(capsule_vol(df_volkmer$cell_width.mean,df_volkmer$cell_length.mean))
+gammaPar <- (mean_vol_Volkmer*4.4*10^6 - 30000)*325 + (30000*7336)
+lp <- 325; lr <- 7336;
+Qaa <- aaDirCost; Qt <- 4; Ql <- qlPar; Qdp <- 1*325; Qdl <- 0;
+
+mr_eq <- function(kN, kT, kL, epsPar, svPar, dp, dl) {
+  return(
+    (8*gammaPar*pi^3*(kL*kT*ls*(dp*Qdp + kN*lp*(Qaa + Qt)) + epsPar*(kL*kN*kT*lp*(ls*Qaa + Ql) + dp*kN*kT*ls*(Qdp + lp*(Qaa + Qt)) + 
+    dl*kN*ls*(dp*Qdp - kT*lp*(Qaa + Qt)) + dp*kL*kT*(-lp*Ql + ls*(Qdp + lp*Qt)) + dl*kL*(dp*ls*Qdp + kN*lp*(ls*Qaa + Qdl + Ql) + 
+    kT*lp*(Qdl + Ql - ls*Qt)))*svPar + dl*(epsPar^2)*(kL + kN)*(dp + kT)*lp*Qdl*svPar^2))/(lp*ls*(svPar^3)*(kL*(kN + kT) + epsPar*(kL + kN)*(dp + kT)*svPar))
+  )
+}
+
+df_mr <- read.csv("/home/bogi/Desktop/growth_rate/data/cell_traits_data/metabolic_rate/Respiration_scaling.csv")
+df_mr <- df_mr[df_mr$OPTICAL.DENSITY==30,]
+df_mr$LOG10RESP <- 10^df_mr$LOG10RESP
+df_mr$LOG10VOLUME <- 10^df_mr$LOG10VOLUME
+df_mr$LOG10RESP <- 60*(6.022*10^23*10^(-6))*((28/6)/0.512)*df_mr$LOG10RESP*(2.5^((20-37)/10))
+df_mr$SV.mean <- 2*pi*(df_mr$LOG10VOLUME)^(-1/3)
+
+p_mr_ltee <- ggplot() + 
+  stat_function(fun=function(x) log10(mr_eq(kN1_q10, kT_q10, kL_q10_alt, epsPar, 10^x, dp_q10, dl_q10)), 
+                aes(colour = "a"), size=line_thick, n=plot_points) +
+  stat_function(fun=function(x) log10(mr_eq(kN2_q10, kT_q10, kL_q10_alt, epsPar, 10^x, dp_q10, dl_q10)), 
+                aes(colour = "b"), size=line_thick, n=plot_points) +
+  stat_function(fun=function(x) log10(mr_eq(kN3_q10, kT_q10, kL_q10_alt, epsPar, 10^x, dp_q10, dl_q10)), 
+                aes(colour = "c"), size=line_thick, n=plot_points) +
+  stat_function(fun=function(x) log10(mr_eq(kN4_q10, kT_q10, kL_q10_alt, epsPar, 10^x, dp_q10, dl_q10)), 
+                aes(colour = "d"), size=line_thick, n=plot_points) +
+  stat_function(fun=function(x) log10(mr_eq(kN5_q10, kT_q10, kL_q10_alt, epsPar, 10^x, dp_q10, dl_q10)), 
+                aes(colour = "e"), size=line_thick, n=plot_points) +
+  stat_function(fun=function(x) log10(mr_eq(kN6_q10, kT_q10, kL_q10_alt, epsPar, 10^x, dp_q10, dl_q10)), 
+                aes(colour = "f"), size=line_thick, n=plot_points) +
+  geom_point(size = 4.0, shape=1, stroke=1.5, alpha=0.75, col="red", aes(x=log10(df_mr$SV.mean), y=log10(df_mr$LOG10RESP))) +
+  theme(aspect.ratio = 1,
+        axis.text.y   = axes_style,
+        axis.text.x   = axes_style,
+        axis.title.y  = axes_style,
+        axis.title.x  = axes_style,
+        legend.position = "none",
+        axis.line = element_line(colour = "black"),
+        panel.background = element_rect(fill = 'grey75'),
+        plot.margin=unit(c(1,1,1.5,1.2),"cm"),
+        panel.border = element_rect(colour = "black", fill=NA, size=2)) +
+  ylab(bquote(bold('Metabolic rate, Log'[10]*'[dQ/dt (ATP cell'^-1*'h'^-1*')]'))) + xlab(bquote(bold('S/V, Log'[10]*'['*Pi*' ('*mu*''*m^-1*')]'))) +
+  scale_colour_manual("Nutrient capacity", values = c("a"=colBlindScale[1], "b"=colBlindScale[2], "c"=colBlindScale[3],
+                                                      "d"=colBlindScale[4], "e"=colBlindScale[5], "f"=colBlindScale[6], "x"="red"), labels = medium_text) +
+  guides(colour=guide_legend(override.aes=list(shape=c(25,18,1,0),linetype=0,stroke=1.5)))
+p_mr_ltee
+
+ggsave(file="p_mr_ltee.pdf", plot=p_mr_ltee, width = 5.2, height = 5.2)
