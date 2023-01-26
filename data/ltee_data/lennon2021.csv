@@ -1,5 +1,5 @@
 population,fitnessMP,fitnessClones,"mean.length","mean.width",generation,ID
-ancMyc,1,,,0.439,0,Mycoplasma mycoides (Moger-Reischer2021)
-evoMyc,1.25,,,0.792,2,Mycoplasma mycoides (Moger-Reischer2021)
-ancMyc,0.5,,,0.305,0,JCVI Mycoplasma (Moger-Reischer2021)
-ancMyc,0.8,,,0.375,2,JCVI Mycoplasma (Moger-Reischer2021)
+ancMyc,1,,,0.575,0,Mycoplasma mycoides (Moger-Reischer2021)
+evoMyc,1.25,,,0.993,2,Mycoplasma mycoides (Moger-Reischer2021)
+ancMyc,0.5,,,0.422,0,JCVI Mycoplasma (Moger-Reischer2021)
+evoMyc,0.8,,,0.463,2,JCVI Mycoplasma (Moger-Reischer2021)
