@@ -13,6 +13,20 @@
 #    Status -- "Processing growth rate data" section was re-written to an include estimate on ribosome number from Lynch et al. 2017.
 #              Statistics are updated and non of the conclusions are changed.
 # ************************************************
+# 
+# UPDATE (January 26, 2023):
+# 1) Added a section of the scaling of metabolic rate in LTEE in "integrated_growth_theory.nb"
+# 2) Added "favate_processing.R" -- Script which computed \Phi_R and \Phi_L based on transcriptomic data from two time points in LTEE
+# 3) Replaced "grant2021.csv" with "grant_wiser_full.csv" due to a mistake in computing S/V across LTEE:
+#    Bug -- An error occurred while processing data from Grant et al. 2021 (i.e., Lenski's cell size measurements), and the wrong column was used as cell #           dimensions. That is, I used the length-to-width ratio as length, and length as width. This is now corrected, and the results are not
+#           significantly impacted.
+# 4) Modified "lennon2021.csv"
+#    Bug -- Cell diameter was initially read off from Figure 4. We now took values directly reported in Table S2. Small differences
+#           exist, but nothing that challenges conclusions.
+# 5) Modified "master.R"
+#    Bug -- Eq S.17 was erroneously transcribed from authors notes, causing misestimation of \kappa_l. This is now fixed, with the improvement of the
+#           actual fit. The whole section on accounting for variation in S/V across growth conditions is elaborated on in the manuscript.
+# ************************************************
 
 
 # ********** Directory descriptions **********
@@ -32,7 +46,7 @@
 # ./data/main/proteome_scaling.csv: Contains data on proteomic mass fractions, surface area, and internal volume across bacteria.
 
 # ./data/ltee_data/gallet2017.csv: Growth rate and cell volume in "The evolution of bacterial cell size: the internal diffusion-constraint hypothesis."
-# ./data/ltee_data/gallet2017.csv: Fitness and linear dimensions of LTEE lines from "Changes in Cell Size and Shape during 50,000 Generations of Experimental Evolution with Escherichia coli."
+# ./data/ltee_data/grant_wiser_full.csv: Fitness and linear dimensions of LTEE lines from "Changes in Cell Size and Shape during 50,000 Generations of Experimental Evolution with Escherichia coli."
 # ./data/ltee_data/lennon2021.csv: Fitness and width of Mycoplasma mycoides from "Evolution of a minimal cell."
 
 # ./data/cell_traits_data/bacterial_envelopes_Sep232021.xlsx: Compiled data from literature on cell size, growth, genomic features, envelope thickness, etc.
@@ -103,6 +117,12 @@
 #         Description: The same as the previous script, but uses species-specific estimates of envelope thickness.
 #         Input  -- ./cell_traits_data/bacterial_envelopes_Sep232021 - {growth, size, other properties}.csv
 #         Output -- growth_scaling.shape.envelope_corrected.csv
+#
+#
+# ./data/main/favate_processing.R
+#         Description: Computes \Phi_L and \Phi_R for ancestral and evolved populations
+#         Input -- 
+#         Outpur -- 
 #
 #
 # ./data/main/master.R
