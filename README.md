@@ -121,8 +121,8 @@
 #
 # ./data/main/favate_processing.R
 #         Description: Computes \Phi_L and \Phi_R for ancestral and evolved populations
-#         Input -- 
-#         Outpur -- 
+#         Input -- LTEE mRNA abundances reported in [Supplemental Table 1]([url](https://www.biorxiv.org/content/10.1101/2021.01.12.426406v1.supplementary-material)) and data from Valgepea et al. 2013 is used to convert mRNA to protein abundances
+#         Outpur -- Printed proteome mass fractions
 #
 #
 # ./data/main/master.R
