@@ -16,6 +16,8 @@
 # 
 # UPDATE (January 26, 2023):
 # 1) Added a section of the scaling of metabolic rate in LTEE in "integrated_growth_theory.nb"
+#           Plotting graphs via "master.R" requires "Respiration_scaling.csv" from Marshall et al. 2022 at
+#           https://datadryad.org/stash/dataset/doi:10.5061/dryad.kd51c5b7n
 # 2) Added "favate_processing.R" -- Script which computed \Phi_R and \Phi_L based on transcriptomic data from two time points in LTEE
 # 3) Replaced "grant2021.csv" with "grant_wiser_full.csv" due to a mistake in computing S/V across LTEE:
 #    Bug -- An error occurred while processing data from Grant et al. 2021 (i.e., Lenski's cell size measurements), and the wrong column was used as cell #           dimensions. That is, I used the length-to-width ratio as length, and length as width. This is now corrected, and the results are not
