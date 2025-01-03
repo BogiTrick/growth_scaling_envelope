@@ -39,6 +39,9 @@ helix_surface <- function(d_cell, len_tot, pitch, d_helix) {
   return(capsule_surf(d_cell, actual_len))
 }
 
+helix_uncoiled_length <- function(d_cell, len_tot, pitch, d_helix) {
+  return(sqrt(pitch^2 + (pi*(d_helix-d_cell))^2)*(len_tot/pitch))
+}
 
 #========== Calculating cell geomtery ==========
 df_size <- read.csv("./cell_traits_data/bacterial_envelopes_Sep232021 - cell_dimensions.csv",
@@ -71,26 +74,37 @@ L_env_mollicutes <- 0.004; # From Trachtenberg et al. 2014
 
 mollicutes_set <- (grepl("Spiroplasma|Mycoplasma|Phytoplasma|Mesoplasma",df_size$species));
 
+# Calculate the length of an uncoiled helical cells
+# L_uncoiled -- the length of uncoiled helical cell, and will be used to calculate its internal volume
+df_size$L_uncoiled.low <- NA
+df_size$L_uncoiled.high <- NA
+df_size$L_uncoiled.mean <- NA
+df_size[df_size$shape=="helical",]$L_uncoiled.low <- with(df_size[df_size$shape=="helical",], helix_uncoiled_length(D.low, L.low, P.low, Dh.low))
+df_size[df_size$shape=="helical",]$L_uncoiled.high <- with(df_size[df_size$shape=="helical",], helix_uncoiled_length(D.high, L.high, P.high, Dh.high))
+df_size[df_size$shape=="helical",]$L_uncoiled.mean <- with(df_size[df_size$shape=="helical",], helix_uncoiled_length(D.mean, L.mean, P.mean, Dh.mean))
+
+# Calculate the inner diameter, length, and uncoiled length (in the case of helical species)
+# *_corr -- linear dimensions of the cytosol (i.e., linear dimensions corrected for envelope thickness)
 df_size$D.low_corr <- df_size$D.low - 2*L_env_generic
 df_size$D.high_corr <- df_size$D.high - 2*L_env_generic
 df_size$D.mean_corr <- df_size$D.mean - 2*L_env_generic
 df_size$L.low_corr <- df_size$L.low - 2*L_env_generic
 df_size$L.high_corr <- df_size$L.high - 2*L_env_generic
 df_size$L.mean_corr <- df_size$L.mean - 2*L_env_generic
-df_size$Dh.low_corr <- df_size$Dh.low - 2*L_env_generic
-df_size$Dh.high_corr <- df_size$Dh.high - 2*L_env_generic
-df_size$Dh.mean_corr <- df_size$Dh.mean - 2*L_env_generic
+df_size$L_uncoiled.low_corr <- df_size$L_uncoiled.low - 2*L_env_generic
+df_size$L_uncoiled.high_corr <- df_size$L_uncoiled.high - 2*L_env_generic
+df_size$L_uncoiled.mean_corr <- df_size$L_uncoiled.mean - 2*L_env_generic
 
+# Repeat the same calculations for mollicutes, but use thinner envelope given that mollicutes only have a plasma membrane
 df_size[mollicutes_set,]$D.low_corr <- df_size[mollicutes_set,]$D.low - 2*L_env_mollicutes
 df_size[mollicutes_set,]$D.high_corr <- df_size[mollicutes_set,]$D.high - 2*L_env_mollicutes
 df_size[mollicutes_set,]$D.mean_corr <- df_size[mollicutes_set,]$D.mean - 2*L_env_mollicutes
 df_size[mollicutes_set,]$L.low_corr <- df_size[mollicutes_set,]$L.low - 2*L_env_mollicutes
 df_size[mollicutes_set,]$L.high_corr <- df_size[mollicutes_set,]$L.high - 2*L_env_mollicutes
 df_size[mollicutes_set,]$L.mean_corr <- df_size[mollicutes_set,]$L.mean - 2*L_env_mollicutes
-df_size[mollicutes_set,]$Dh.low_corr <- df_size[mollicutes_set,]$Dh.low - 2*L_env_mollicutes
-df_size[mollicutes_set,]$Dh.high_corr <- df_size[mollicutes_set,]$Dh.high - 2*L_env_mollicutes
-df_size[mollicutes_set,]$Dh.mean_corr <- df_size[mollicutes_set,]$Dh.mean - 2*L_env_mollicutes
-
+df_size[mollicutes_set,]$L_uncoiled.low_corr <- df_size[mollicutes_set,]$L_uncoiled.low - 2*L_env_mollicutes
+df_size[mollicutes_set,]$L_uncoiled.high_corr <- df_size[mollicutes_set,]$L_uncoiled.high - 2*L_env_mollicutes
+df_size[mollicutes_set,]$L_uncoiled.mean_corr <- df_size[mollicutes_set,]$L_uncoiled.mean - 2*L_env_mollicutes
 
 # Subset by cell shape, and calculate volumes and surface areas of capsules and spheres
 df_size_rod <- df_size[(df_size$shape=="rod"),]
@@ -102,14 +116,17 @@ lo_vol_rod <- t(as.data.frame(lapply(seq(1,nrow(df_size_rod)), function(x) capsu
 hi_vol_rod <- t(as.data.frame(lapply(seq(1,nrow(df_size_rod)), function(x) capsule_vol(df_size_rod$D.high_corr[x], df_size_rod$L.high_corr[x]))))
 mean_vol_rod <- t(as.data.frame(lapply(seq(1,nrow(df_size_rod)), function(x) capsule_vol(df_size_rod$D.mean_corr[x], df_size_rod$L.mean_corr[x]))))
 
-lo_vol_hel <- t(as.data.frame(lapply(seq(1,nrow(df_size_helix)), function(x) helix_volume(df_size_helix$D.low_corr[x], df_size_helix$L.low_corr[x], df_size_helix$P.low[x], df_size_helix$Dh.low_corr[x]))))
-hi_vol_hel <- t(as.data.frame(lapply(seq(1,nrow(df_size_helix)), function(x) helix_volume(df_size_helix$D.high_corr[x], df_size_helix$L.high_corr[x], df_size_helix$P.high[x], df_size_helix$Dh.high_corr[x]))))
-mean_vol_hel <- t(as.data.frame(lapply(seq(1,nrow(df_size_helix)), function(x) helix_volume(df_size_helix$D.mean_corr[x], df_size_helix$L.mean_corr[x], df_size_helix$P.mean[x], df_size_helix$Dh.mean_corr[x]))))
+# The cytoplasmic volume of a helical cell is calculated as the capsule volume, with inner diameter and uncoiled length as arguments
+lo_vol_hel <- t(as.data.frame(lapply(seq(1,nrow(df_size_helix)), function(x) capsule_vol(df_size_helix$D.low_corr[x], df_size_helix$L_uncoiled.low_corr[x]))))
+hi_vol_hel <- t(as.data.frame(lapply(seq(1,nrow(df_size_helix)), function(x) capsule_vol(df_size_helix$D.high_corr[x], df_size_helix$L_uncoiled.high_corr[x]))))
+mean_vol_hel <- t(as.data.frame(lapply(seq(1,nrow(df_size_helix)), function(x) capsule_vol(df_size_helix$D.mean_corr[x], df_size_helix$L_uncoiled.mean_corr[x]))))
 
+# Finally, calculate sphere volume
 lo_vol_sphere <- t(as.data.frame(lapply(seq(1,nrow(df_size_sphere)), function(x) sphere_vol(df_size_sphere$D.low_corr[x]))))
 hi_vol_sphere <- t(as.data.frame(lapply(seq(1,nrow(df_size_sphere)), function(x) sphere_vol(df_size_sphere$D.high_corr[x]))))
 mean_vol_sphere <- t(as.data.frame(lapply(seq(1,nrow(df_size_sphere)), function(x) sphere_vol(df_size_sphere$D.mean_corr[x]))))
 
+# Calculate total surface area; Note that we are using total linear dimensions, and not inner ones
 lo_surf_rod <- t(as.data.frame(lapply(seq(1,nrow(df_size_rod)), function(x) capsule_surf(df_size_rod$D.low[x], df_size_rod$L.low[x]))))
 hi_surf_rod <- t(as.data.frame(lapply(seq(1,nrow(df_size_rod)), function(x) capsule_surf(df_size_rod$D.high[x], df_size_rod$L.high[x]))))
 mean_surf_rod <- t(as.data.frame(lapply(seq(1,nrow(df_size_rod)), function(x) capsule_surf(df_size_rod$D.mean[x], df_size_rod$L.mean[x]))))
@@ -153,6 +170,23 @@ df_size_helix$S.mean <- mean_surf_hel
 df_size <- rbind(df_size_rod, df_size_sphere, df_size_helix)
 
 
+#========== Scaling of surface with volume ==========
+scaling_surf_vol_rod <- lm(data=df_size_rod, log10(S.mean)~log10(V.mean))
+summary(scaling_surf_vol_rod)
+
+scaling_surf_vol_sphere <- lm(data=df_size_sphere, log10(S.mean)~log10(V.mean))
+summary(scaling_surf_vol_sphere)
+
+scaling_surf_vol_helix <- lm(data=df_size_helix, log10(S.mean)~log10(V.mean))
+summary(scaling_surf_vol_helix)
+
+scaling_surf_vol_full <- lm(data=df_size, log10(S.mean)~log10(V.mean))
+summary(scaling_surf_vol_full)
+
+scaling_surf_vol_no_helix <- lm(data=df_size[df_size$shape!="helical",], log10(S.mean)~log10(V.mean))
+summary(scaling_surf_vol_no_helix)
+
+
 #========== Justification for fixed S/V across the cell cycle ==========
 # Set the color-blind scale
 colBlindScale <- c("#000000", "#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", 
@@ -169,18 +203,38 @@ tmp_size_sphere <- df_size_sphere
 tmp_size_rod <- df_size_rod
 tmp_size_helix <- df_size_helix
 
-birth_pi <- capsule_surf(df_size_sphere$D.mean,df_size_sphere$D.mean)/capsule_vol(df_size_sphere$D.mean,df_size_sphere$D.mean)
-div_pi <- capsule_surf(df_size_sphere$D.mean,2*df_size_sphere$D.mean)/capsule_vol(df_size_sphere$D.mean,2*df_size_sphere$D.mean)
+# Spheres
+birth_pi <- with(
+                  df_size_sphere,
+                  capsule_surf(D.mean,D.mean)/capsule_vol(D.mean_corr,D.mean_corr)
+)
+div_pi <- with(
+              df_size_sphere,
+              capsule_surf(D.mean,2*D.mean-D.mean/3)/
+              capsule_vol(D.mean_corr,2*D.mean_corr-D.mean_corr/3)
+)
 tmp_size_sphere$delta_pi <- birth_pi-div_pi
 
-birth_pi <- capsule_surf(df_size_rod$D.mean,df_size_rod$L.mean)/capsule_vol(df_size_rod$D.mean,df_size_rod$L.mean)
-div_pi <- (capsule_surf(df_size_rod$D.mean,2*df_size_rod$L.mean))/capsule_vol(df_size_rod$D.mean,2*df_size_rod$L.mean)
+# Rods
+birth_pi <- with(
+                df_size_rod,
+                capsule_surf(D.mean,L.mean)/capsule_vol(D.mean_corr,L.mean_corr)
+)
+div_pi <- with(
+              df_size_rod,
+              capsule_surf(D.mean,2*L.mean-D.mean/3)/capsule_vol(D.mean_corr,2*L.mean_corr-D.mean_corr/3)
+)  
 tmp_size_rod$delta_pi <- birth_pi-div_pi
 
-birth_pi <- helix_surface(df_size_helix$D.mean,df_size_helix$L.mean,df_size_helix$P.mean,df_size_helix$Dh.mean)/
-  helix_volume(df_size_helix$D.mean,df_size_helix$L.mean,df_size_helix$P.mean,df_size_helix$Dh.mean)
-div_pi <- helix_surface(df_size_helix$D.mean,2*df_size_helix$L.mean,df_size_helix$P.mean,df_size_helix$Dh.mean)/
-  helix_volume(df_size_helix$D.mean,2*df_size_helix$L.mean,df_size_helix$P.mean,df_size_helix$Dh.mean)
+# Helices
+birth_pi <- with(
+               df_size_helix,
+               capsule_surf(D.mean,L_uncoiled.mean)/capsule_vol(D.mean_corr,L_uncoiled.mean_corr)
+                )
+div_pi <- with(
+               df_size_helix, 
+               capsule_surf(D.mean,2*L_uncoiled.mean-D.mean/3)/capsule_vol(D.mean_corr,2*L_uncoiled.mean_corr-D.mean_corr/3)
+              )
 tmp_size_helix$delta_pi <- birth_pi-div_pi
 
 p_dist_delta_pi <- ggplot(rbind(tmp_size_helix,tmp_size_rod,tmp_size_sphere), aes(x=log10(S.mean/V.mean), y=log10(delta_pi), col=shape)) + 
@@ -196,6 +250,7 @@ p_dist_delta_pi <- ggplot(rbind(tmp_size_helix,tmp_size_rod,tmp_size_sphere), ae
         panel.border = element_rect(colour = "black", fill=NA, size=2)) +
   scale_y_continuous(labels=scaleFUN) +
   ylab(bquote(bold('S/V difference, Log'[10]*'['*Delta*Pi*' ('*mu*''*m^-1*')]'))) + xlab(bquote(bold('S/V, Log'[10]*'['*Pi*' ('*mu*''*m^-1*')]')))
+p_dist_delta_pi
 
 p_scaling_delta_pi  <- ggplot(rbind(tmp_size_helix,tmp_size_rod,tmp_size_sphere), aes(x=log10(delta_pi), fill=shape)) + 
   geom_histogram(alpha=0.5, position="identity", color="black") +
@@ -211,6 +266,7 @@ p_scaling_delta_pi  <- ggplot(rbind(tmp_size_helix,tmp_size_rod,tmp_size_sphere)
   scale_y_continuous(labels=scaleFUN) +
   xlab(bquote(bold('S/V difference, Log'[10]*'['*Delta*Pi*' ('*mu*''*m^-1*')]'))) + ylab(bquote(bold('Count'))) +
   xlim(-3,1)
+p_scaling_delta_pi
 
 legend_delta_pi <- ggplot(rbind(tmp_size_helix,tmp_size_rod,tmp_size_sphere), aes(x=log10(delta_pi), fill=shape)) + 
   geom_histogram(alpha=0.5, position="identity", color="black") +
@@ -245,20 +301,15 @@ summary(model_dens)
 #========== Merging ribosomal abundances, quantitative proteomics, and cell size data ==========
 df_abund <- read.csv("./cell_traits_data/bacterial_envelopes_Sep232021 - ribosome_abundance.csv",
                      header = TRUE, sep = ",", stringsAsFactors = FALSE)
-colnames(df_abund)[3] <- "source"
-df_abund <- merge(df_abund, df_size, by="species")
+colnames(df_abund)[4] <- "source"
 df_abund$ribosome_mass_total <- (df_abund$ribosome_abundance*7336*110)/(6.022*10^23)
 df_abund$ribo_frac <- df_abund$ribosome_mass_total/(
-  ((10^(-9))*(0.54*10^(-3.30537))*df_abund$V.mean^(0.92892))
+  ((10^(-9))*(0.54*10^(-3.30537))*df_abund$cell_volume..um3.^(0.92892))
 )
 
 spiroplasma_cell_mass <- 3.69*10^(-14) # grams per cell; Trachtenberg et al. 2014 Plos
 df_abund$ribo_frac[grepl("\\bSpiroplasma", df_abund$species)] <- 
   df_abund$ribosome_mass_total[grepl("\\bSpiroplasma", df_abund$species)]/spiroplasma_cell_mass
-df_abund$ribo_frac[df_abund$species=="Leptospira interrogans"] <- 
-  df_abund$ribosome_mass_total[df_abund$species=="Leptospira interrogans"]/(
-    ((10^(-9))*(0.54*10^(-3.30537))*0.22^(0.92892))
-  ) # Volume from the same study where ribosome count comes from
 
 df_proteomics <- read.csv("./main/quant_proteome_data.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE)
 substr(df_proteomics$species, 1, 1) <- toupper(substr(df_proteomics$species, 1, 1))

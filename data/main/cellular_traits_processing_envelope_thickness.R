@@ -1,3 +1,10 @@
+#=============== USAGE =====================
+# Input: 
+# 1. ./cell_traits_data/bacterial_envelopes_Sep232021 - {growth, size, other properties}.csv
+#
+# Output:
+# 1. growth_scaling.shape.genome.csv
+
 remove(list=ls())
 library(dplyr)
 library(ggplot2)
@@ -32,6 +39,10 @@ helix_surface <- function(d_cell, len_tot, pitch, d_helix) {
   return(capsule_surf(d_cell, actual_len))
 }
 
+helix_uncoiled_length <- function(d_cell, len_tot, pitch, d_helix) {
+  return(sqrt(pitch^2 + (pi*(d_helix-d_cell))^2)*(len_tot/pitch))
+}
+
 #========== Calculating cell geomtery ==========
 df_size <- read.csv("./cell_traits_data/bacterial_envelopes_Sep232021 - cell_dimensions.csv",
                     skip = 0, header = TRUE, sep = ",", stringsAsFactors = FALSE)
@@ -55,19 +66,30 @@ df_size <- merge(df_size, df_env, by = "species", all.x = TRUE)
 
 # Since the theory states that internal volume of the cell matters as opposed to total volume
 # we account for this by modifying all linear dimensions by subtracting 2x the thickness of an E. coli envelope of 30nm
-#L_env_generic <- 0.03;
-L_env_mollicutes <- 0.004; # From Trachtenberg et al. 2014
+# IMPORTANT NOTE: For S/V_{tot} and V_{tot}, set both L_env parameters to zero. This ensures that full linear dimensions are
+#                 taken for both Mollicutes and the rest of bacterial species
 L_env_specific <- df_size$Total/1000;
 
+# Calculate the length of an uncoiled helical cells
+# L_uncoiled -- the length of uncoiled helical cell, and will be used to calculate its internal volume
+df_size$L_uncoiled.low <- NA
+df_size$L_uncoiled.high <- NA
+df_size$L_uncoiled.mean <- NA
+df_size[df_size$shape=="helical",]$L_uncoiled.low <- with(df_size[df_size$shape=="helical",], helix_uncoiled_length(D.low, L.low, P.low, Dh.low))
+df_size[df_size$shape=="helical",]$L_uncoiled.high <- with(df_size[df_size$shape=="helical",], helix_uncoiled_length(D.high, L.high, P.high, Dh.high))
+df_size[df_size$shape=="helical",]$L_uncoiled.mean <- with(df_size[df_size$shape=="helical",], helix_uncoiled_length(D.mean, L.mean, P.mean, Dh.mean))
+
+# Calculate the inner diameter, length, and uncoiled length (in the case of helical species)
+# *_corr -- linear dimensions of the cytosol (i.e., linear dimensions corrected for envelope thickness)
 df_size$D.low_corr <- df_size$D.low - 2*L_env_specific
 df_size$D.high_corr <- df_size$D.high - 2*L_env_specific
 df_size$D.mean_corr <- df_size$D.mean - 2*L_env_specific
 df_size$L.low_corr <- df_size$L.low - 2*L_env_specific
 df_size$L.high_corr <- df_size$L.high - 2*L_env_specific
 df_size$L.mean_corr <- df_size$L.mean - 2*L_env_specific
-df_size$Dh.low_corr <- df_size$Dh.low - 2*L_env_specific
-df_size$Dh.high_corr <- df_size$Dh.high - 2*L_env_specific
-df_size$Dh.mean_corr <- df_size$Dh.mean - 2*L_env_specific
+df_size$L_uncoiled.low_corr <- df_size$L_uncoiled.low - 2*L_env_specific
+df_size$L_uncoiled.high_corr <- df_size$L_uncoiled.high - 2*L_env_specific
+df_size$L_uncoiled.mean_corr <- df_size$L_uncoiled.mean - 2*L_env_specific
 
 # Subset by cell shape, and calculate volumes and surface areas of capsules and spheres
 df_size_rod <- df_size[(df_size$shape=="rod"),]
@@ -79,14 +101,17 @@ lo_vol_rod <- t(as.data.frame(lapply(seq(1,nrow(df_size_rod)), function(x) capsu
 hi_vol_rod <- t(as.data.frame(lapply(seq(1,nrow(df_size_rod)), function(x) capsule_vol(df_size_rod$D.high_corr[x], df_size_rod$L.high_corr[x]))))
 mean_vol_rod <- t(as.data.frame(lapply(seq(1,nrow(df_size_rod)), function(x) capsule_vol(df_size_rod$D.mean_corr[x], df_size_rod$L.mean_corr[x]))))
 
-lo_vol_hel <- t(as.data.frame(lapply(seq(1,nrow(df_size_helix)), function(x) helix_volume(df_size_helix$D.low_corr[x], df_size_helix$L.low_corr[x], df_size_helix$P.low[x], df_size_helix$Dh.low_corr[x]))))
-hi_vol_hel <- t(as.data.frame(lapply(seq(1,nrow(df_size_helix)), function(x) helix_volume(df_size_helix$D.high_corr[x], df_size_helix$L.high_corr[x], df_size_helix$P.high[x], df_size_helix$Dh.high_corr[x]))))
-mean_vol_hel <- t(as.data.frame(lapply(seq(1,nrow(df_size_helix)), function(x) helix_volume(df_size_helix$D.mean_corr[x], df_size_helix$L.mean_corr[x], df_size_helix$P.mean[x], df_size_helix$Dh.mean_corr[x]))))
+# The cytoplasmic volume of a helical cell is calculated as the capsule volume, with inner diameter and uncoiled length as arguments
+lo_vol_hel <- t(as.data.frame(lapply(seq(1,nrow(df_size_helix)), function(x) capsule_vol(df_size_helix$D.low_corr[x], df_size_helix$L_uncoiled.low_corr[x]))))
+hi_vol_hel <- t(as.data.frame(lapply(seq(1,nrow(df_size_helix)), function(x) capsule_vol(df_size_helix$D.high_corr[x], df_size_helix$L_uncoiled.high_corr[x]))))
+mean_vol_hel <- t(as.data.frame(lapply(seq(1,nrow(df_size_helix)), function(x) capsule_vol(df_size_helix$D.mean_corr[x], df_size_helix$L_uncoiled.mean_corr[x]))))
 
+# Finally, calculate sphere volume
 lo_vol_sphere <- t(as.data.frame(lapply(seq(1,nrow(df_size_sphere)), function(x) sphere_vol(df_size_sphere$D.low_corr[x]))))
 hi_vol_sphere <- t(as.data.frame(lapply(seq(1,nrow(df_size_sphere)), function(x) sphere_vol(df_size_sphere$D.high_corr[x]))))
 mean_vol_sphere <- t(as.data.frame(lapply(seq(1,nrow(df_size_sphere)), function(x) sphere_vol(df_size_sphere$D.mean_corr[x]))))
 
+# Calculate total surface area; Note that we are using total linear dimensions, and not inner ones
 lo_surf_rod <- t(as.data.frame(lapply(seq(1,nrow(df_size_rod)), function(x) capsule_surf(df_size_rod$D.low[x], df_size_rod$L.low[x]))))
 hi_surf_rod <- t(as.data.frame(lapply(seq(1,nrow(df_size_rod)), function(x) capsule_surf(df_size_rod$D.high[x], df_size_rod$L.high[x]))))
 mean_surf_rod <- t(as.data.frame(lapply(seq(1,nrow(df_size_rod)), function(x) capsule_surf(df_size_rod$D.mean[x], df_size_rod$L.mean[x]))))
@@ -128,6 +153,7 @@ df_size_helix$S.mean <- mean_surf_hel
 
 # Bind together
 df_size <- rbind(df_size_rod, df_size_sphere, df_size_helix)
+
 
 #========== Processing growth rate data ==========
 in_file_growth <- "./cell_traits_data/bacterial_envelopes_Sep232021 - growth_rates.csv"
