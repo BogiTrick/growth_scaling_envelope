@@ -20,7 +20,8 @@
 #           https://datadryad.org/stash/dataset/doi:10.5061/dryad.kd51c5b7n
 # 2) Added "favate_processing.R" -- Script which computed \Phi_R and \Phi_L based on transcriptomic data from two time points in LTEE
 # 3) Replaced "grant2021.csv" with "grant_wiser_full.csv" due to a mistake in computing S/V across LTEE:
-#    Bug -- An error occurred while processing data from Grant et al. 2021 (i.e., Lenski's cell size measurements), and the wrong column was used as cell #           dimensions. That is, I used the length-to-width ratio as length, and length as width. This is now corrected, and the results are not
+#    Bug -- An error occurred while processing data from Grant et al. 2021 (i.e., Lenski's cell size measurements), and the wrong column was used as cell 
+#           dimensions. That is, I used the length-to-width ratio as length, and length as width. This is now corrected, and the results are not
 #           significantly impacted.
 # 4) Modified "lennon2021.csv"
 #    Bug -- Cell diameter was initially read off from Figure 4. We now took values directly reported in Table S2. Small differences
@@ -29,6 +30,10 @@
 #    Bug -- Eq S.17 was erroneously transcribed from authors notes, causing misestimation of \kappa_l. This is now fixed, with the improvement of the
 #           actual fit. The whole section on accounting for variation in S/V across growth conditions is elaborated on in the manuscript.
 # ************************************************
+#
+# UPDATE (January 3, 2025):
+# 1) Various minor data processing errors are corrected. The affected scripts "master.R", "cellular_traits_processing.csv", and "cellular_traits_processing_envelope_thickness.csv". Output files of these scripts are updated as well.
+# 2) Added data on metabolic rate across bacterial species (see "metabolic_rate" subdirectory and updated "bacterial_envelopes_Sep232021.xlsx" for the updated source file).
 
 
 # ********** Directory descriptions **********
