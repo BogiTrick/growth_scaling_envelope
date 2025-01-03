@@ -1818,7 +1818,6 @@ data_select$growth_rate <- log(2)/data_select$doubling_h_norm
 data_select$environment <- "Host-associated"
 data_select[!grepl("^host", data_select$isolation_source),]$environment <- "Free-living"
 
-#+offset(1*log10(S.mean/V.mean)) -- this part should be added as offset to test whether the slope is significantly different from the expectation
 lm_madinSV <- lm(log10(growth_rate)~log10(S.mean/V.mean), data=data_select)
 lm_madinV <- lm(log10(growth_rate)~log10(V.mean), data=data_select)
 summary(lm_madinSV)
@@ -2156,7 +2155,6 @@ summary(lm_mr_ltee_Vext)
 lm_mr_ltee_SV_per_cell <- lm(log10(J_per_cell_per_hour)~log10(SV.mean), data=df_mr_ltee)
 summary(lm_mr_ltee_SV_per_cell)
 confint(lm_mr_ltee_SV_per_cell, level=0.95)
-
 
 lm_mr_ltee_SV <- lm(log10(J_per_hour_per_um3)~log10(SV.mean), data=df_mr_ltee)
 summary(lm_mr_ltee_SV)
